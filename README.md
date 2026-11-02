@@ -20,7 +20,11 @@ A task queue could demonstrate uniqueness and state transitions, but overlap and
 
 ## Run
 
-Requires Node.js 22 or newer and npm. Install exact dependencies with `npm ci`, then:
+Requires Node.js 22 or newer and npm.
+
+Alternatively, with Nix installed, run `nix develop` to enter a shell with Node.js, npm, Git, and GitHub CLI. Then install the project dependencies with `npm ci`.
+
+Install exact dependencies with `npm ci`, then:
 
 ```sh
 npm run build             # compile-time contracts, including negative type checks
