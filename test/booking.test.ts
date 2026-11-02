@@ -9,7 +9,6 @@ import { MemoryBookingRepository } from '../src/memory-repository.js';
 const invalidBooking: import('../src/booking.js').Booking = { id: 'x', start: '60', end: 120 };
 // @ts-expect-error only documented result statuses are allowed
 const invalidResult: BookResult = { status: 'maybe' };
-void invalidBooking; void invalidResult;
 
 const minute = fc.integer({ min: -10000, max: 10000 });
 const duration = fc.integer({ min: 1, max: 1000 });
