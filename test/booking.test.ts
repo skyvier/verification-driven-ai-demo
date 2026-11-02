@@ -6,7 +6,7 @@ import { MemoryBookingRepository } from '../src/memory-repository.js';
 
 // Compile-time checks: these invalid values must remain rejected by TypeScript.
 // @ts-expect-error start must be numeric
-const invalidBooking: import('../src/booking.js').Booking = { id: 'x', start: '60', end: 120 };
+const invalidBooking: import('../src/booking.js').BookingRequest = { id: 'x', start: '60', end: 120 };
 // @ts-expect-error only documented result statuses are allowed
 const invalidResult: BookResult = { status: 'maybe' };
 

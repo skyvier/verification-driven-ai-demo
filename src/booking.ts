@@ -29,8 +29,13 @@ export class ValidatedInterval implements Interval {
 export function createInterval(start: EpochMilliseconds, end: EpochMilliseconds): ValidatedInterval | null {
   return ValidatedInterval.create(start, end);
 }
-/** A confirmed booking and its caller-provided unique identifier. */
-export interface Booking extends Interval { readonly id: string }
+/** Untrusted request: the service must validate it before storage. */
+export interface BookingRequest extends Interval { readonly id: string }
+/** A booking can only carry an interval produced by the validating constructor. */
+export interface Booking {
+  readonly id: string;
+  readonly interval: ValidatedInterval;
+}
 /** Expected outcomes are explicit; invalid input does not change the calendar. */
 export type BookResult =
   | { readonly status: 'booked'; readonly booking: Booking }
@@ -49,7 +54,7 @@ export class BookingService {
   constructor(private readonly repository: BookingRepository) {}
 
   /** Validate and reserve an available interval. */
-  book(_booking: Booking): BookResult {
+  book(_booking: BookingRequest): BookResult {
     return { status: 'invalid' }; // Deliberately incomplete for the demo.
   }
 

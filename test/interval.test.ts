@@ -1,6 +1,7 @@
+import { MemoryBookingRepository } from '../src/memory-repository.js';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createInterval, createEpochMilliseconds, type EpochMilliseconds, type ValidatedInterval } from '../src/booking.js';
+import { type Booking, type BookingRequest, type BookResult, type BookingRepository, createInterval, createEpochMilliseconds, type EpochMilliseconds, type ValidatedInterval } from '../src/booking.js';
 
 // @ts-expect-error Raw numbers must be validated before they are epoch milliseconds.
 const rawEpochMilliseconds: EpochMilliseconds = 10;
@@ -41,4 +42,27 @@ test('intervals require ordered epoch milliseconds and cannot be mutated', () =>
   assert.equal(createInterval(start, start), null);
   assert.equal(createInterval(end, start), null);
   assert.equal(createInterval(NaN as EpochMilliseconds, end), null);
+});
+
+// Compile-only boundary checks; this function is deliberately never invoked.
+function checkBookingBoundary(repository: BookingRepository, request: BookingRequest) {
+  // @ts-expect-error Raw requests cannot be persisted as validated bookings.
+  repository.save(request);
+  // @ts-expect-error Safe endpoints alone do not establish interval ordering.
+  repository.save({ id: 'a', interval: { start: validatedStart, end: validatedEnd } });
+  // @ts-expect-error Successful results must also contain a validated booking.
+  const invalidSuccess: BookResult = { status: 'booked', booking: request };
+  const booking: Booking = { id: 'a', interval: validInterval };
+  repository.save(booking);
+  const success: BookResult = { status: 'booked', booking };
+}
+
+test('repository preserves validated interval identity and immutability', () => {
+  const repository = new MemoryBookingRepository();
+  repository.save({ id: 'a', interval: validInterval });
+  const stored = repository.list()[0]!;
+  assert.equal(stored.interval, validInterval);
+  assert.ok(Object.isFrozen(stored.interval));
+  assert.throws(() => Object.assign(stored.interval, { start: validatedEnd }), TypeError);
+  assert.equal(repository.list()[0]!.interval.start, validatedStart);
 });
