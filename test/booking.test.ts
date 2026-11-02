@@ -10,11 +10,11 @@ const invalidBooking: import('../src/booking.js').Booking = { id: 'x', start: '6
 // @ts-expect-error only documented result statuses are allowed
 const invalidResult: BookResult = { status: 'maybe' };
 
-const minute = fc.integer({ min: -10000, max: 10000 });
+const epochMilliseconds = fc.integer({ min: 1_700_000_000_000, max: 1_700_000_010_000 });
 const duration = fc.integer({ min: 1, max: 1000 });
 
 test('every positive interval can be booked and an overlap is rejected', () => {
-  fc.assert(fc.property(minute, duration, (start, length) => {
+  fc.assert(fc.property(epochMilliseconds, duration, (start, length) => {
     const repository = new MemoryBookingRepository();
     const service = new BookingService(repository);
     assert.equal(service.book({ id: 'a', start, end: start + length }).status, 'booked');
@@ -24,7 +24,7 @@ test('every positive interval can be booked and an overlap is rejected', () => {
 });
 
 test('a second interval is accepted exactly when it does not overlap', () => {
-  fc.assert(fc.property(minute, duration, minute, duration, (firstStart, firstLength, secondStart, secondLength) => {
+  fc.assert(fc.property(epochMilliseconds, duration, epochMilliseconds, duration, (firstStart, firstLength, secondStart, secondLength) => {
     const service = new BookingService(new MemoryBookingRepository());
     const firstEnd = firstStart + firstLength;
     const secondEnd = secondStart + secondLength;
@@ -35,7 +35,7 @@ test('a second interval is accepted exactly when it does not overlap', () => {
 });
 
 test('adjacent bookings never overlap', () => {
-  fc.assert(fc.property(minute, duration, duration, (start, firstLength, secondLength) => {
+  fc.assert(fc.property(epochMilliseconds, duration, duration, (start, firstLength, secondLength) => {
     const service = new BookingService(new MemoryBookingRepository());
     const boundary = start + firstLength;
     assert.equal(service.book({ id: 'a', start, end: boundary }).status, 'booked');

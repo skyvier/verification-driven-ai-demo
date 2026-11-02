@@ -1,23 +1,23 @@
-/** A half-open interval in whole minutes on a shared timeline. */
+/** A half-open interval in Unix epoch milliseconds. */
 export interface Interval { readonly start: number; readonly end: number }
 
-declare const minuteBrand: unique symbol;
-/** A validated safe integer representing minutes on the shared timeline. */
-export type Minute = number & { readonly [minuteBrand]: 'Minute' };
+declare const epochMillisecondsBrand: unique symbol;
+/** A validated safe integer representing Unix epoch milliseconds. */
+export type EpochMilliseconds = number & { readonly [epochMillisecondsBrand]: 'EpochMilliseconds' };
 
-/** Validate a raw number before treating it as a minute. */
-export function createMinute(value: number): Minute | null {
-  return Number.isSafeInteger(value) ? value as Minute : null;
+/** Validate a raw number before treating it as Unix epoch milliseconds. */
+export function createEpochMilliseconds(value: number): EpochMilliseconds | null {
+  return Number.isSafeInteger(value) ? value as EpochMilliseconds : null;
 }
 
-/** An immutable half-open interval whose endpoints are ordered minutes. */
+/** An immutable half-open interval whose endpoints are ordered Unix epoch milliseconds. */
 export class ValidatedInterval implements Interval {
   declare private readonly validatedIntervalBrand: void;
 
-  private constructor(readonly start: Minute, readonly end: Minute) {}
+  private constructor(readonly start: EpochMilliseconds, readonly end: EpochMilliseconds) {}
 
   /** Return an interval only when both endpoints are valid and ordered. */
-  static create(start: Minute, end: Minute): ValidatedInterval | null {
+  static create(start: EpochMilliseconds, end: EpochMilliseconds): ValidatedInterval | null {
     if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start >= end) return null;
     const interval = new ValidatedInterval(start, end);
     Object.freeze(interval);
@@ -25,8 +25,8 @@ export class ValidatedInterval implements Interval {
   }
 }
 
-/** Construct an interval from validated minute values. */
-export function createInterval(start: Minute, end: Minute): ValidatedInterval | null {
+/** Construct an interval from validated Unix epoch millisecond values. */
+export function createInterval(start: EpochMilliseconds, end: EpochMilliseconds): ValidatedInterval | null {
   return ValidatedInterval.create(start, end);
 }
 /** A confirmed booking and its caller-provided unique identifier. */
