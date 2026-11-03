@@ -14,8 +14,6 @@ The calendar is initially empty; it represents one room. Calls are sequential in
 
 A task queue could demonstrate uniqueness and state transitions, but overlap and adjacency make meeting-room examples easier to see. A database-backed booking service would demonstrate stronger integration guarantees, at the cost of setup and concurrency complexity. This in-memory version keeps feedback fast while still exercising a real storage component.
 
-- **Types and contracts:** the TypeScript interface and result union constrain callers and implementations at compile time. TypeScript types are erased; numeric validity and business rules require runtime checks. `@ts-expect-error` examples are checked by the compiler, not runtime tests.
-- **Validated values:** `createEpochMilliseconds` accepts only safe integer Unix epoch milliseconds, and `createInterval` produces an immutable `ValidatedInterval` only when its start precedes its end. `BookingService.book` accepts a raw `BookingRequest` so it can report invalid requests. Stored `Booking` values and successful results require a `ValidatedInterval` in their `interval` field: the implementation must validate the endpoints and their ordering before constructing a booking. `BookingRepository.save` rejects raw requests and structural lookalikes at compile time. The repository preserves the immutable interval when copying bookings. These types establish interval validity; uniqueness and non-overlap still require behavioral checks. Type assertions and untyped callers can bypass TypeScript checks.
 - **Gherkin:** concrete booking, conflict, adjacency, cancellation, invalid-input and duplicate-ID examples run through Cucumber and the service.
 - **Properties:** fast-check generates intervals to check that equal intervals conflict and touching intervals coexist. Fixed seeds aid reproduction; these properties cover generated cases, not all possible behavior.
 - **Integration:** the tests use the actual in-memory repository with the service to inspect changes and verify failed operations leave state intact. They do not test a database or concurrency.
@@ -30,7 +28,7 @@ Alternatively, with Nix installed, run `nix develop` to enter a shell with Node.
 Install exact dependencies with `npm ci`, then:
 
 ```sh
-npm run build             # compile-time contracts, including negative type checks
+npm run build             # compile TypeScript source and tests
 npm test                  # build, acceptance scenarios, and property/integration tests
 ```
 
@@ -43,7 +41,7 @@ At this checkpoint `npm run build` must succeed, while behavioral tests intentio
 3. **Delegated implementation:** run `sh scripts/run-demo.sh` from a clean committed checkpoint. The script creates a temporary baseline from `HEAD`, installs its locked dependencies, and launches Codex against a separate copy. It prints the checkpoint and the temporary directory so the run can be inspected.
 4. **Review:** the script copies the candidate implementation directory into a fresh copy of the baseline and runs `npm test`. It reports success only if Codex exits successfully and the trusted checks pass. Inspect the candidate in the printed workspace, and discuss what the tests actually prove, missing cases, storage and concurrency limits, and whether the requirements express what users need.
 
-The service stub is isolated in `src/implementation/booking-service.ts`; contracts and validating constructors remain in `src/booking.ts`, and tests remain under `test/`. The Codex permission profile grants write access only to `src/implementation/` and `dist/`, with approval requests disabled. The verifier copies the whole implementation directory, including additional files, but rejects symlinks and other non-regular entries. The baseline and verification workspace are outside the agent's writable paths. The script uses the committed `HEAD`, not uncommitted changes; it leaves the temporary run directory for inspection and does not automatically retry a failed verification.
+The service stub is in `src/booking.ts`; booking domain types and constructor tests are not predefined in this scenario. The Codex permission profile grants write access only to `src/implementation/` and `dist/`, with approval requests disabled. The verifier copies the whole implementation directory, including additional files, but rejects symlinks and other non-regular entries. The baseline and verification workspace are outside the agent's writable paths. The script uses the committed `HEAD`, not uncommitted changes; it leaves the temporary run directory for inspection and does not automatically retry a failed verification.
 
 This is a local demo, not a hardened sandbox for hostile code. The trusted checks run with only their build output writable and network disabled, but execute candidate code in the same process as the tests. Candidate code could interfere with the result, for example by terminating a test process early or modifying generated tests in `dist/`. The public `BookingService` signatures remain in the protected contract. Passing tests demonstrate only encoded properties, not complete correctness or production readiness.
 
