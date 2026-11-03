@@ -2,24 +2,24 @@
 
 ## Project Structure
 
-This TypeScript demo models a single-room booking service. `src/booking.ts` defines public contracts and validated interval constructors; `src/implementation/` contains the deliberately incomplete service; and `src/memory-repository.ts` provides in-memory storage. `test/features/` contains Gherkin scenarios, `test/steps/` their Cucumber steps, and `test/*.test.ts` the property, integration, and constructor checks. `scripts/` and `test-harness/` contain the demo launcher and its checks. Compiled output goes to `dist/`.
+This TypeScript project models a single-room booking service. `src/booking.ts` defines public contracts, `src/implementation/booking-service.ts` implements booking rules, and `src/memory-repository.ts` provides in-memory storage. `test/features/` contains Gherkin scenarios, `test/steps/` their Cucumber steps, and `test/*.test.ts` the property and integration checks. `scripts/` and `test-harness/` contain the demo launcher and its checks. Compiled output goes to `dist/`.
 
 ## Build and Test
 
 Use Node.js 22 or newer. Run `npm ci` to install locked dependencies; alternatively, enter `nix develop` first for the project tools.
 
-- `npm run build` compiles source and tests, including negative type checks.
-- `npm test` builds and runs the acceptance, property/integration, and constructor suites.
-- After building, run `npm run test:acceptance`, `npm run test:properties`, or `npm run test:constructors` for an individual suite.
+- `npm run build` compiles source and tests.
+- `npm test` builds and runs the acceptance and property/integration suites.
+- After building, run `npm run test:acceptance` or `npm run test:properties` for an individual suite.
 - `node --test test-harness/verify.test.mjs` checks candidate transfer; `sh test-harness/sandbox-boundary.sh` checks sandbox permissions outside an enclosing sandbox on macOS.
 
-The current checkpoint intentionally leaves the service as a stub: the build and constructor checks pass, while booking behavior tests fail until implementation. Preserve this starting state unless the task calls for implementing the service.
+The service is implemented; run the full suite after behavior changes.
 
 ## Coding and Testing
 
 Follow the existing TypeScript style: two-space indentation, single quotes, descriptive camelCase names, and PascalCase types and classes. Use strict types and `.js` import specifiers for local modules. Keep functions focused and document important contracts and assumptions. No formatter or linter is configured.
 
-Use Cucumber for acceptance scenarios, Node's test runner for integration and constructor tests, and fast-check for properties. Add tests under `test/` using `*.test.ts` or `test/features/*.feature` as appropriate. Preserve fixed seeds where reproducibility matters. Run the full suite for behavior changes; report known baseline failures explicitly. No coverage threshold is configured.
+Use Cucumber for acceptance scenarios, Node's test runner for integration tests, and fast-check for properties. Add tests under `test/` using `*.test.ts` or `test/features/*.feature` as appropriate. Preserve fixed seeds where reproducibility matters. Run the full suite for behavior changes; report known baseline failures explicitly. No coverage threshold is configured.
 
 ## Contracts and Delegation
 

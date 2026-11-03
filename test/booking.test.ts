@@ -1,14 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fc from 'fast-check';
-import { BookingService, type BookResult } from '../src/booking.js';
+import { BookingService } from '../src/booking.js';
 import { MemoryBookingRepository } from '../src/memory-repository.js';
-
-// Compile-time checks: these invalid values must remain rejected by TypeScript.
-// @ts-expect-error start must be numeric
-const invalidBooking: import('../src/booking.js').BookingRequest = { id: 'x', start: '60', end: 120 };
-// @ts-expect-error only documented result statuses are allowed
-const invalidResult: BookResult = { status: 'maybe' };
 
 const epochMilliseconds = fc.integer({ min: 1_700_000_000_000, max: 1_700_000_010_000 });
 const duration = fc.integer({ min: 1, max: 1000 });
@@ -58,4 +52,41 @@ test('invalid input and failed operations leave real repository unchanged', () =
   assert.deepEqual(repository.list(), before);
   assert.equal(service.cancel('a').status, 'cancelled');
   assert.deepEqual(repository.list(), []);
+});
+
+test('validates unknown input and supports the full safe-integer range', () => {
+  const repository = new MemoryBookingRepository();
+  const service = new BookingService(repository);
+  for (const input of [null, undefined, 1, 'booking', {}, { id: 'x', start: 0 },
+    { id: '', start: 0, end: 1 }, { id: 'x', start: Number.MIN_SAFE_INTEGER - 1, end: 0 },
+    { id: 'x', start: 0, end: Number.MAX_SAFE_INTEGER + 1 },
+  ]) {
+    assert.deepEqual(service.book(input), { status: 'invalid' });
+  }
+  assert.deepEqual(service.book({ id: 'before-epoch', start: Number.MIN_SAFE_INTEGER, end: -1 }), { status: 'booked' });
+  assert.deepEqual(service.book({ id: 'after-date-range', start: 0, end: Number.MAX_SAFE_INTEGER }), { status: 'booked' });
+  assert.equal(repository.list().length, 2);
+});
+
+test('reports invalid before duplicate and duplicate before overlap', () => {
+  const service = new BookingService(new MemoryBookingRepository());
+  assert.equal(service.book({ id: 'taken', start: 10, end: 20 }).status, 'booked');
+  assert.equal(service.book({ id: 'taken', start: 15, end: 25 }).status, 'duplicate-id');
+  assert.equal(service.book({ id: 'other', start: 15, end: 25 }).status, 'conflict');
+  assert.equal(service.book({ id: 'taken', start: 20, end: 20 }).status, 'invalid');
+  assert.equal(service.book({ id: ' ', start: 20, end: 21 }).status, 'booked');
+});
+
+test('repository copies prevent alias mutation and cancellation frees the ID', () => {
+  const repository = new MemoryBookingRepository();
+  const service = new BookingService(repository);
+  const input = { id: 'a', start: 10, end: 20 };
+  assert.equal(service.book(input).status, 'booked');
+  input.start = -100;
+  const listed = repository.list();
+  assert.notEqual(listed[0], repository.list()[0]);
+  listed[0] = { id: 'changed', start: -100, end: -50 };
+  assert.deepEqual(repository.list(), [{ id: 'a', start: 10, end: 20 }]);
+  assert.equal(service.cancel('a').status, 'cancelled');
+  assert.equal(service.book({ id: 'a', start: 10, end: 20 }).status, 'booked');
 });

@@ -1,67 +1,27 @@
-import { book, cancel } from './implementation/booking-service.js';
-
-/** A half-open interval in Unix epoch milliseconds. */
-export interface Interval { readonly start: number; readonly end: number }
-
-declare const epochMillisecondsBrand: unique symbol;
-/** A validated safe integer representing Unix epoch milliseconds. */
-export type EpochMilliseconds = number & { readonly [epochMillisecondsBrand]: 'EpochMilliseconds' };
-
-/** Validate a raw number before treating it as Unix epoch milliseconds. */
-export function createEpochMilliseconds(value: number): EpochMilliseconds | null {
-  return Number.isSafeInteger(value) ? value as EpochMilliseconds : null;
-}
-
-/** An immutable half-open interval whose endpoints are ordered Unix epoch milliseconds. */
-export class ValidatedInterval implements Interval {
-  declare private readonly validatedIntervalBrand: void;
-
-  private constructor(readonly start: EpochMilliseconds, readonly end: EpochMilliseconds) {}
-
-  /** Return an interval only when both endpoints are valid and ordered. */
-  static create(start: EpochMilliseconds, end: EpochMilliseconds): ValidatedInterval | null {
-    if (!Number.isSafeInteger(start) || !Number.isSafeInteger(end) || start >= end) return null;
-    const interval = new ValidatedInterval(start, end);
-    Object.freeze(interval);
-    return interval;
-  }
-}
-
-/** Construct an interval from validated Unix epoch millisecond values. */
-export function createInterval(start: EpochMilliseconds, end: EpochMilliseconds): ValidatedInterval | null {
-  return ValidatedInterval.create(start, end);
-}
-/** Untrusted request: the service must validate it before storage. */
-export interface BookingRequest extends Interval { readonly id: string }
-/** A booking can only carry an interval produced by the validating constructor. */
+/** A reservation for a half-open interval of epoch milliseconds. */
 export interface Booking {
   readonly id: string;
-  readonly interval: ValidatedInterval;
+  readonly start: number;
+  readonly end: number;
 }
-/** Expected outcomes are explicit; invalid input does not change the calendar. */
-export type BookResult =
-  | { readonly status: 'booked'; readonly booking: Booking }
-  | { readonly status: 'invalid' | 'conflict' | 'duplicate-id' };
-export type CancelResult = { readonly status: 'cancelled' | 'not-found' };
 
-/** Storage boundary for one calendar; operations are sequential, not atomic. */
+/** Storage operations required by the single-room booking service. */
 export interface BookingRepository {
-  list(): readonly Booking[];
+  list(): Booking[];
   save(booking: Booking): void;
   remove(id: string): void;
 }
 
-/** The feature under delegation, with its public signatures protected. */
-export class BookingService {
-  constructor(private readonly repository: BookingRepository) {}
+/** Result of attempting to reserve a room interval. */
+export type BookingResult =
+  | { readonly status: 'booked' }
+  | { readonly status: 'invalid' }
+  | { readonly status: 'duplicate-id' }
+  | { readonly status: 'conflict' };
 
-  /** Validate and reserve an available interval. */
-  book(booking: BookingRequest): BookResult {
-    return book(this.repository, booking);
-  }
+/** Result of attempting to cancel a room reservation. */
+export type CancellationResult =
+  | { readonly status: 'cancelled' }
+  | { readonly status: 'not-found' };
 
-  /** Cancel an existing booking, releasing its interval. */
-  cancel(id: string): CancelResult {
-    return cancel(this.repository, id);
-  }
-}
+export { BookingService } from './implementation/booking-service.js';
