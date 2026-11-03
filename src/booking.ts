@@ -49,4 +49,4 @@ export interface BookingRepository {
   remove(id: string): void;
 }
 
-export { BookingService } from './booking-service.js';
+export { BookingService } from './implementation/booking-service.js';

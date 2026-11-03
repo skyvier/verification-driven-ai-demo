@@ -1,4 +1,4 @@
-import type { BookingRepository, BookingRequest, BookResult, CancelResult } from './booking.js';
+import type { BookingRepository, BookingRequest, BookResult, CancelResult } from '../booking.js';
 
 /** The feature under delegation. */
 export class BookingService {
