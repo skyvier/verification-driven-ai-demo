@@ -8,16 +8,24 @@ fi
 
 baseline=$1
 candidate=$2
-service=src/implementation/booking-service.ts
-if [ ! -f "$candidate/$service" ] || [ -L "$candidate/$service" ]; then
+implementation=src/implementation
+service=$implementation/booking-service.ts
+if [ ! -d "$candidate/$implementation" ] || [ -L "$candidate/$implementation" ] ||
+   [ ! -f "$candidate/$service" ] || [ -L "$candidate/$service" ]; then
   echo "Candidate service must be a regular file, not a symlink" >&2
+  exit 1
+fi
+non_regular_entries=$(find "$candidate/$implementation" ! -type d ! -type f -print -quit)
+if [ -n "$non_regular_entries" ]; then
+  echo "Candidate implementation may contain only regular files and directories" >&2
   exit 1
 fi
 
 verification=$(mktemp -d "${TMPDIR:-/tmp}/booking-verification.XXXXXX")
 trap 'rm -rf "$verification"' EXIT HUP INT TERM
 cp -R "$baseline/." "$verification/"
-cp "$candidate/$service" "$verification/$service"
+rm -rf "$verification/$implementation"
+cp -R "$candidate/$implementation" "$verification/$implementation"
 mkdir -p "$verification/dist"
 . "$baseline/scripts/demo-permissions.sh"
 codex sandbox -C "$verification" -P booking-verification \

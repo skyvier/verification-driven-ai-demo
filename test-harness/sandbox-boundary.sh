@@ -16,6 +16,8 @@ codex sandbox -C "$workspace" -P booking-demo \
   /bin/sh -c '
     set -eu
     printf "implementation\n" > src/implementation/booking-service.ts
+    mkdir src/implementation/helpers
+    printf "helper\n" > src/implementation/helpers/check.ts
     printf "build\n" > dist/output
     if (printf "modified\n" > test/booking.test.ts) 2>/dev/null; then exit 1; fi
     if (printf "modified\n" > src/booking.ts) 2>/dev/null; then exit 1; fi
