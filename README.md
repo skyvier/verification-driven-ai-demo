@@ -16,7 +16,6 @@ A task queue could demonstrate uniqueness and state transitions, but overlap and
 
 - **Types and contracts:** the TypeScript interface and result union constrain callers and implementations at compile time. TypeScript types are erased; numeric validity and business rules require runtime checks. `@ts-expect-error` examples are checked by the compiler, not runtime tests.
 - **Validated values:** `createEpochMilliseconds` accepts only safe integer Unix epoch milliseconds, and `createInterval` produces an immutable `ValidatedInterval` only when its start precedes its end. `BookingService.book` accepts a raw `BookingRequest` so it can report invalid requests. Stored `Booking` values and successful results require a `ValidatedInterval` in their `interval` field: the implementation must validate the endpoints and their ordering before constructing a booking. `BookingRepository.save` rejects raw requests and structural lookalikes at compile time. The repository preserves the immutable interval when copying bookings. These types establish interval validity; uniqueness and non-overlap still require behavioral checks. Type assertions and untyped callers can bypass TypeScript checks.
-- **Gherkin:** concrete booking, conflict, adjacency, cancellation, invalid-input and duplicate-ID examples run through Cucumber and the service.
 - **Properties:** fast-check generates intervals to check that equal intervals conflict and touching intervals coexist. Fixed seeds aid reproduction; these properties cover generated cases, not all possible behavior.
 - **Integration:** the tests use the actual in-memory repository with the service to inspect changes and verify failed operations leave state intact. They do not test a database or concurrency.
 - **Regression:** after the live implementation, a later real bug can be reproduced in a test before repair. No agent failure has been seeded or observed here.
@@ -31,10 +30,10 @@ Install exact dependencies with `npm ci`, then:
 
 ```sh
 npm run build             # compile-time contracts, including negative type checks
-npm test                  # build, acceptance scenarios, and property/integration tests
+npm test                  # build, property/integration tests, and constructor tests
 ```
 
-At this checkpoint `npm run build` must succeed, while behavioral tests intentionally fail because `BookingService` is a stub. Some individual checks can pass already. The Cucumber report may mark later steps as skipped after an earlier assertion fails. Run `npm run test:acceptance` or `npm run test:properties` after building to inspect each suite separately. Both suites must pass after implementation.
+At this checkpoint `npm run build` must succeed, while behavioral tests intentionally fail because `BookingService` is a stub. Some individual checks can pass already. Run `npm run test:properties` or `npm run test:constructors` after building to inspect each suite separately. Both suites must pass after implementation.
 
 ## Demo sequence
 
