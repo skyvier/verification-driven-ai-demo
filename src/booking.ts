@@ -1,3 +1,5 @@
+import { book, cancel } from './implementation/booking-service.js';
+
 /** A half-open interval in Unix epoch milliseconds. */
 export interface Interval { readonly start: number; readonly end: number }
 
@@ -49,4 +51,17 @@ export interface BookingRepository {
   remove(id: string): void;
 }
 
-export { BookingService } from './implementation/booking-service.js';
+/** The feature under delegation, with its public signatures protected. */
+export class BookingService {
+  constructor(private readonly repository: BookingRepository) {}
+
+  /** Validate and reserve an available interval. */
+  book(booking: BookingRequest): BookResult {
+    return book(this.repository, booking);
+  }
+
+  /** Cancel an existing booking, releasing its interval. */
+  cancel(id: string): CancelResult {
+    return cancel(this.repository, id);
+  }
+}
