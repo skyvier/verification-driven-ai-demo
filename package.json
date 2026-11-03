@@ -1,0 +1,22 @@
+{
+  "name": "verification-driven-ai-demo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test:acceptance": "cucumber-js --import 'dist/test/steps/*.js' test/features/*.feature",
+    "test:properties": "node --test dist/test/booking.test.js",
+    "test:constructors": "node --test dist/test/interval.test.js",
+    "test": "npm run build && (npm run test:acceptance; acceptance=$?; npm run test:properties; properties=$?; npm run test:constructors; constructors=$?; test $acceptance -eq 0 -a $properties -eq 0 -a $constructors -eq 0)"
+  },
+  "devDependencies": {
+    "@cucumber/cucumber": "^12.6.0",
+    "@types/node": "^24.0.0",
+    "fast-check": "^4.0.0",
+    "typescript": "^5.9.0"
+  }
+}
